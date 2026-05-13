@@ -10,7 +10,7 @@ from database import engine, SessionLocal
 
 # models.Base.metadata.create_all(bind=engine) # Disabled: Managed by Alembic now
 
-app = FastAPI(title="Property API")
+app = FastAPI(title="Property API", strict_slashes=False)
 
 # Setup CORS for the React frontend
 app.add_middleware(
@@ -25,10 +25,14 @@ app.add_middleware(
         "http://127.0.0.1:8000",
         "https://dashboard.mavinsky.com",
         "https://www.dashboard.mavinsky.com",
+        "https://backend.mavinsky.com",
+        "https://mavinsky.com",
     ],
+    allow_origin_regex="https://.*mavinsky\.com",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    max_age=3600,
 )
 
 
@@ -39,6 +43,11 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+@app.get("/")
+def health_check():
+    return {"status": "operational", "message": "Property API is active"}
 
 
 @app.post("/properties/", response_model=schemas.PropertyResponse, status_code=201)

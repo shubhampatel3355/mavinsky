@@ -99,6 +99,16 @@ def delete_category(category_id: int, db: Session = Depends(get_db)):
     return
 
 
+@app.delete("/categories/by-name/{name}", status_code=204)
+def delete_category_by_name(name: str, db: Session = Depends(get_db)):
+    cat = db.query(models.Category).filter(models.Category.name == name).first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    db.delete(cat)
+    db.commit()
+    return
+
+
 @app.put("/properties/{property_id}", response_model=schemas.PropertyResponse)
 def update_property(
     property_id: int,

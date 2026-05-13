@@ -30,5 +30,5 @@ COPY . .
 # Expose the default Uvicorn port
 EXPOSE 8000
 
-# Run Alembic migrations on startup, then launch the server
-CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]
+# Run reconciliation and migrations on startup, then launch the server
+CMD ["sh", "-c", "python reconcile_db.py && uvicorn main:app --host 0.0.0.0 --port 8000"]

@@ -56,6 +56,13 @@ def create_property(property: schemas.PropertyCreate, db: Session = Depends(get_
     db.commit()
     db.refresh(db_property)
     
+    # Auto-register category if it doesn't exist
+    existing_cat = db.query(models.Category).filter(models.Category.name == property.category).first()
+    if not existing_cat:
+        new_cat = models.Category(name=property.category)
+        db.add(new_cat)
+        db.commit()
+
     return db_property
 
 
@@ -64,11 +71,32 @@ def get_properties(skip: int = 0, limit: int = 1000, db: Session = Depends(get_d
     return db.query(models.Property).offset(skip).limit(limit).all()
 
 
-@app.get("/categories/", response_model=List[str])
+@app.get("/categories/", response_model=List[schemas.CategoryResponse])
 def get_categories(db: Session = Depends(get_db)):
-    """ Returns a unique list of categories from the existing properties """
-    categories = db.query(models.Property.category).distinct().all()
-    return [c[0] for c in categories if c[0]]
+    """ Returns all registered categories """
+    return db.query(models.Category).all()
+
+
+@app.post("/categories/", response_model=schemas.CategoryResponse)
+def create_category(category: schemas.CategoryCreate, db: Session = Depends(get_db)):
+    existing = db.query(models.Category).filter(models.Category.name == category.name).first()
+    if existing:
+        return existing
+    new_cat = models.Category(name=category.name)
+    db.add(new_cat)
+    db.commit()
+    db.refresh(new_cat)
+    return new_cat
+
+
+@app.delete("/categories/{category_id}", status_code=204)
+def delete_category(category_id: int, db: Session = Depends(get_db)):
+    cat = db.query(models.Category).filter(models.Category.id == category_id).first()
+    if not cat:
+        raise HTTPException(status_code=404, detail="Category not found")
+    db.delete(cat)
+    db.commit()
+    return
 
 
 @app.put("/properties/{property_id}", response_model=schemas.PropertyResponse)

@@ -49,3 +49,9 @@ class Profile(Base):
     phone_number = Column(String)
     bio = Column(Text)
     profile_picture_url = Column(String)
+
+
+class Category(Base):
+    __tablename__ = "categories"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)

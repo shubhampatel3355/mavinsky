@@ -15,25 +15,16 @@ app = FastAPI(title="Property API", strict_slashes=False)
 # Setup CORS for the React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://localhost:5174",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:5174",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://127.0.0.1:8000",
-        "https://dashboard.mavinsky.com",
-        "https://www.dashboard.mavinsky.com",
-        "https://backend.mavinsky.com",
-        "https://mavinsky.com",
-    ],
-    allow_origin_regex="https://.*mavinsky\.com",
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
     max_age=3600,
 )
+
+@app.options("/{path:path}")
+async def options_handler(path: str):
+    return {"message": "ok"}
 
 
 # Dependency to get DB session

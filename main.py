@@ -64,6 +64,13 @@ def get_properties(skip: int = 0, limit: int = 1000, db: Session = Depends(get_d
     return db.query(models.Property).offset(skip).limit(limit).all()
 
 
+@app.get("/categories/", response_model=List[str])
+def get_categories(db: Session = Depends(get_db)):
+    """ Returns a unique list of categories from the existing properties """
+    categories = db.query(models.Property.category).distinct().all()
+    return [c[0] for c in categories if c[0]]
+
+
 @app.put("/properties/{property_id}", response_model=schemas.PropertyResponse)
 def update_property(
     property_id: int,

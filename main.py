@@ -10,7 +10,11 @@ from database import engine, SessionLocal
 
 # models.Base.metadata.create_all(bind=engine) # Disabled: Managed by Alembic now
 
+# Property API with Document Repository
 app = FastAPI(title="Property API", strict_slashes=False)
+
+# Increase the maximum request size to 50MB for document uploads
+# This is handled by uvicorn/starlette naturally, but we should be aware of it.
 
 # Setup CORS for the React frontend
 app.add_middleware(
@@ -44,6 +48,7 @@ def health_check():
 @app.post("/properties/", response_model=schemas.PropertyResponse, status_code=201)
 def create_property(property: schemas.PropertyCreate, db: Session = Depends(get_db)):
     property_data = property.model_dump()
+    print(f"DEBUG: Creating property with documents count: {len(property.documents)}")
     property_data["key_features"] = [f.model_dump() for f in property.key_features]
     
     db_property = models.Property(**property_data)
@@ -119,16 +124,34 @@ def update_property(
     if not db_property:
         raise HTTPException(status_code=404, detail="Property not found")
 
-    update_data = property_data.model_dump(exclude_unset=True)
-    if "key_features" in update_data:
-        update_data["key_features"] = [f.model_dump() for f in property_data.key_features]
-
+    print(f"DEBUG: Updating property {property_id}")
+    print(f"DEBUG: Documents received: {len(property_data.documents)}")
+    
+    update_data = property_data.model_dump()
+    
+    from sqlalchemy.orm.attributes import flag_modified
+    
+    # Explicitly handle JSONB fields to ensure SQLAlchemy detects changes
     for key, value in update_data.items():
+        if key == "documents":
+            print(f"DEBUG: Setting documents: {len(value) if value else 0} items")
         setattr(db_property, key, value)
+    
+    # Force SQLAlchemy to recognize the JSONB change
+    flag_modified(db_property, "documents")
+    flag_modified(db_property, "media_files")
+    flag_modified(db_property, "key_features")
+    flag_modified(db_property, "amenities")
 
-    db.commit()
-    db.refresh(db_property)
-    return db_property
+    try:
+        db.commit()
+        db.refresh(db_property)
+        print(f"DEBUG: Successfully saved property {property_id}")
+        return db_property
+    except Exception as e:
+        db.rollback()
+        print(f"DEBUG: Error saving property: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
 
 
 @app.get("/properties/{property_id}", response_model=schemas.PropertyResponse)

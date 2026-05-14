@@ -33,6 +33,7 @@ class Property(Base):
     dynamic_fields = Column(
         JSONB, nullable=True, default=dict
     )  # Store dynamic properties
+    documents = Column(JSONB, default=list)  # Store document metadata and base64/links
 
     # We can add a relationship to Profile if properties belong to users later
     # owner_id = Column(Integer, ForeignKey("profiles.id"))

@@ -22,6 +22,7 @@ class PropertyCreate(BaseModel):
     contact_number: str
     amenities: List[str]
     dynamic_fields: Optional[Dict[str, Any]] = None
+    documents: List[Dict[str, Any]] = []
 
 class PropertyResponse(PropertyCreate):
     id: int

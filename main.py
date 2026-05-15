@@ -246,6 +246,23 @@ def get_public_property(bgm_id: str, db: Session = Depends(get_db)):
         # documents intentionally excluded (may contain private data)
     }
 
+# --- Auth Endpoints ---
+
+from pydantic import BaseModel
+
+class LoginSchema(BaseModel):
+    username: str
+    password: str
+
+@app.post("/auth/login")
+def login(data: LoginSchema):
+    """ Simple hardcoded authentication for the dashboard """
+    if data.username == "admin" and data.password == "admin":
+        token = secrets.token_hex(32)
+        return {"access_token": token, "token_type": "bearer", "expires_in": 86400}
+    raise HTTPException(status_code=401, detail="Invalid credentials")
+
+
 # --- Utility Endpoints ---
 
 @app.get("/resolve-url")

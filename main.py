@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
 import urllib.request
+import datetime
+import secrets
+import string
 
 import models
 import schemas
@@ -56,8 +59,8 @@ def create_property(property: schemas.PropertyCreate, db: Session = Depends(get_
     db.commit()
     db.refresh(db_property)
     
-    # Auto-generate BGM identifier
-    db_property.bgm_id = f"BGM-{db_property.id:04d}"
+    # Auto-generate BGM identifier (now MAVI)
+    db_property.bgm_id = f"MAVI-{db_property.id:04d}"
     db.commit()
     db.refresh(db_property)
     
@@ -196,6 +199,52 @@ def update_profile(profile_data: schemas.ProfileUpdate, db: Session = Depends(ge
     db.commit()
     db.refresh(profile)
     return profile
+
+
+# --- Share / Public Property Endpoints ---
+
+
+@app.post("/share-link", response_model=schemas.ShareResponse)
+def share_property(share_data: schemas.ShareRequest, db: Session = Depends(get_db)):
+    """Generate a public shareable URL for a property using its BGM ID."""
+    db_property = db.query(models.Property).filter(
+        models.Property.id == share_data.property_id
+    ).first()
+    if not db_property:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    bgm_id = db_property.bgm_id or f"MAVI-{db_property.id:04d}"
+    base_url = "http://localhost:5173"  # Will be replaced by env var in production
+    share_url = f"{base_url}/property/{bgm_id}"
+
+    return {"shareUrl": share_url, "shareId": bgm_id}
+
+
+@app.get("/public/property/{bgm_id}")
+def get_public_property(bgm_id: str, db: Session = Depends(get_db)):
+    """Public endpoint: returns property data with all contact info stripped out."""
+    db_property = db.query(models.Property).filter(
+        models.Property.bgm_id == bgm_id
+    ).first()
+    if not db_property:
+        raise HTTPException(status_code=404, detail="Property not found")
+
+    # Build a safe public payload — NO contact fields
+    return {
+        "bgm_id": db_property.bgm_id,
+        "title": db_property.title,
+        "price": db_property.price,
+        "category": db_property.category,
+        "property_for": db_property.property_for,
+        "sqft": db_property.sqft,
+        "address": db_property.address,
+        "city": db_property.city,
+        "description": db_property.description,
+        "amenities": db_property.amenities or [],
+        "key_features": db_property.key_features or [],
+        "media_files": db_property.media_files or [],
+        # documents intentionally excluded (may contain private data)
+    }
 
 # --- Utility Endpoints ---
 

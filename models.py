@@ -56,3 +56,11 @@ class Category(Base):
     __tablename__ = "categories"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, index=True)
+
+
+class Share(Base):
+    __tablename__ = "shares"
+    id = Column(String, primary_key=True, index=True)  # e.g., MAV-14-XYZ
+    property_id = Column(Integer)
+    snapshot = Column(JSONB)
+    created_at = Column(String)

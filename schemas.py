@@ -55,3 +55,12 @@ class CategoryCreate(CategoryBase):
 class CategoryResponse(CategoryBase):
     id: int
     model_config = ConfigDict(from_attributes=True)
+
+
+class ShareRequest(BaseModel):
+    property_id: int
+
+
+class ShareResponse(BaseModel):
+    shareUrl: str
+    shareId: str

@@ -74,8 +74,9 @@ def create_property(property: schemas.PropertyCreate, db: Session = Depends(get_
     return db_property
 
 
-@app.get("/properties/", response_model=List[schemas.PropertyResponse])
-def get_properties(skip: int = 0, limit: int = 1000, db: Session = Depends(get_db)):
+@app.get("/properties/", response_model=List[schemas.PropertySummary])
+def get_properties(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    """ Returns a lightweight list of properties for the dashboard and list views. """
     return db.query(models.Property).offset(skip).limit(limit).all()
 
 

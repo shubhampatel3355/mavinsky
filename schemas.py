@@ -29,6 +29,19 @@ class PropertyResponse(PropertyCreate):
     bgm_id: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
+class PropertySummary(BaseModel):
+    """ A lightweight schema for list views to improve performance """
+    id: int
+    bgm_id: Optional[str] = None
+    title: str
+    price: str
+    category: str
+    property_for: Optional[str] = None
+    sqft: Optional[str] = None
+    city: str
+    media_files: List[Dict[str, Any]]
+    model_config = ConfigDict(from_attributes=True)
+
 
 class ProfileBase(BaseModel):
     first_name: str
